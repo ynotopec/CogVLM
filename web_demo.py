@@ -50,7 +50,7 @@ def process_image_without_resize(image_prompt):
 
 from sat.quantization.kernels import quantize
 
-def load_model(args): 
+def load_model(args):
     model, model_args = CogVLMModel.from_pretrained(
         args.from_pretrained,
         args=argparse.Namespace(
@@ -99,22 +99,22 @@ def post(
         if result_text[i][0] == "" or result_text[i][0] == None:
             del result_text[i]
     print(f"history {result_text}")
-    
+
     global model, image_processor, text_processor_infer, is_grounding
 
     try:
         with torch.no_grad():
             pil_img, image_path_grounding = process_image_without_resize(image_prompt)
             response, _, cache_image = chat(
-                    image_path="", 
-                    model=model, 
+                    image_path="",
+                    model=model,
                     text_processor=text_processor_infer,
                     img_processor=image_processor,
-                    query=input_text, 
-                    history=result_text, 
-                    image=pil_img, 
-                    max_length=2048, 
-                    top_p=top_p, 
+                    query=input_text,
+                    history=result_text,
+                    image=pil_img,
+                    max_length=2048,
+                    top_p=top_p,
                     temperature=temperature,
                     top_k=top_k,
                     invalid_slices=text_processor_infer.invalid_slices if hasattr(text_processor_infer, "invalid_slices") else [],
@@ -150,7 +150,7 @@ def main(args):
     global model, image_processor, text_processor_infer, is_grounding
     model, image_processor, text_processor_infer = load_model(args)
     is_grounding = 'grounding' in args.from_pretrained
-    
+
     gr.close_all()
     examples = []
     example_ids = list(range(3)) if not is_grounding else list(range(3,6,1))
@@ -168,7 +168,7 @@ def main(args):
         gr.Markdown(NOTES)
 
         with gr.Row():
-            with gr.Column(scale=4.5):
+            with gr.Column(scale=5):
                 with gr.Group():
                     input_text = gr.Textbox(label='Input Text', placeholder='Please enter text prompt below and press ENTER.')
                     with gr.Row():
@@ -182,8 +182,9 @@ def main(args):
                     top_p = gr.Slider(maximum=1, value=0.4, minimum=0, label='Top P')
                     top_k = gr.Slider(maximum=100, value=10, minimum=1, step=1, label='Top K')
 
-            with gr.Column(scale=5.5):
-                result_text = gr.components.Chatbot(label='Multi-round conversation History', value=[("", "Hi, What do you want to know about this image?")]).style(height=550)
+            with gr.Column(scale=5):
+                result_text = gr.components.Chatbot(label='Multi-round conversation History', value=[("", "Hi, What do you want to know about this image?")],)
+#.style(eight=550).scale(5)
                 hidden_image_hash = gr.Textbox(visible=False)
 
         gr_examples = gr.Examples(examples=[[example["text"], example["image"]] for example in examples], 
@@ -204,7 +205,7 @@ def main(args):
 
         print(gr.__version__)
 
-    demo.queue(concurrency_count=10)
+    demo.queue()#concurrency_count=10)
     demo.launch()
 
 
@@ -228,5 +229,5 @@ if __name__ == '__main__':
     rank = int(os.environ.get('RANK', 0))
     world_size = int(os.environ.get('WORLD_SIZE', 1))
     parser = CogVLMModel.add_model_specific_args(parser)
-    args = parser.parse_args()   
+    args = parser.parse_args()
     main(args)
